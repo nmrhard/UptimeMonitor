@@ -124,6 +124,7 @@ function checkIpAddress(ipOrUrl) {
   return /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(
     ipOrUrl
   );
+}
 
 // Monitoring Logic with Timeout
 async function checkStatus(monitor) {
@@ -132,7 +133,10 @@ async function checkStatus(monitor) {
   if (isIpAddress) {
     // Use ping for IP address reachability
     try {
-      const res = await ping.promise.probe(monitor.ipOrUrl, { timeout: TIMEOUT_MS });
+      const res = await ping.promise.probe(monitor.ipOrUrl, {
+        timeout: TIMEOUT_MS / 1000,
+      });
+      console.log(res);
       return res.alive ? 'online' : 'offline';
     } catch (error) {
       return 'offline'; // Return offline if ping fails
