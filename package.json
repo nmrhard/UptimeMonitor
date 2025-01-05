@@ -1,0 +1,25 @@
+{
+  "name": "uptimemonitor",
+  "version": "0.0.1",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "fastify": "^5.2.0",
+    "joi": "^17.13.3",
+    "node-cron": "^3.0.3",
+    "node-fetch": "^2.7.0",
+    "ping": "^0.4.4",
+    "sequelize": "^6.37.5",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  }
+}
