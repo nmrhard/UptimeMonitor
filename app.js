@@ -27,7 +27,7 @@ const MonitorLog = require('./models/monitorLog')(sequelize, DataTypes);
 // Sync database
 (async () => {
   try {
-    await sequelize.sync({ alter: true });
+    await sequelize.sync();
     app.log.info('Database synchronized.');
   } catch (error) {
     app.log.error(`Database synchronization failed: ${error.message}`);
@@ -120,19 +120,19 @@ app.get('/logs', async (req, reply) => {
   }
 });
 
+function checkIpAddress(ipOrUrl) {
+  return /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(
+    ipOrUrl
+  );
+
 // Monitoring Logic with Timeout
 async function checkStatus(monitor) {
-  const isIpAddress =
-    /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.([0-5]?[0-9]|[01]?[0-9][0-9]?)\.([0-5]?[0-9]|[01]?[0-9][0-9]?)\.([0-5]?[0-9]|[01]?[0-9][0-9]?)$/.test(
-      monitor.ipOrUrl
-    );
+  const isIpAddress = checkIpAddress(monitor.ipOrUrl);
 
   if (isIpAddress) {
     // Use ping for IP address reachability
-    console.log('Ping');
     try {
-      const res = await ping.promise.probe(monitor.ipOrUrl);
-      console.log('Res:', res);
+      const res = await ping.promise.probe(monitor.ipOrUrl, { timeout: TIMEOUT_MS });
       return res.alive ? 'online' : 'offline';
     } catch (error) {
       return 'offline'; // Return offline if ping fails
@@ -152,7 +152,7 @@ async function checkStatus(monitor) {
     } catch (error) {
       clearTimeout(timeout);
       if (error.name === 'AbortError') {
-        return 'timeout';
+        return 'offline'; // Return offline if request is aborted
       }
       throw error;
     }
@@ -166,7 +166,6 @@ async function updateMonitorStatus(monitor, status) {
 }
 
 async function sendWebhook(monitor, status) {
-  console.log('Webhook:', monitor);
   if (!monitor.webhookUrl) return;
 
   try {
@@ -191,8 +190,7 @@ async function sendWebhook(monitor, status) {
 async function handleMonitor(monitor) {
   try {
     const status = await checkStatus(monitor);
-    console.log('Status:', status);
-    console.log('Last Status:', monitor.lastStatus);
+
     if (status !== monitor.lastStatus) {
       await updateMonitorStatus(monitor, status);
       await sendWebhook(monitor, status);
@@ -203,7 +201,6 @@ async function handleMonitor(monitor) {
 }
 
 async function checkMonitors() {
-  console.log('Checking');
   const monitors = await Monitor.findAll();
   await Promise.all(monitors.map(handleMonitor));
 }
