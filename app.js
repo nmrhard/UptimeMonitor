@@ -136,7 +136,6 @@ async function checkStatus(monitor) {
       const res = await ping.promise.probe(monitor.ipOrUrl, {
         timeout: TIMEOUT_MS / 1000,
       });
-      console.log(res);
       return res.alive ? 'online' : 'offline';
     } catch (error) {
       return 'offline'; // Return offline if ping fails
