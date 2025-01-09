@@ -213,7 +213,7 @@ async function checkMonitors() {
 cron.schedule('* * * * *', checkMonitors); // Run every minute
 
 // Start Server
-app.listen({ port: PORT }, (err) => {
+app.listen({ port: PORT, host: '0.0.0.0' }, (err) => {
   if (err) {
     app.log.error(err);
     process.exit(1);
