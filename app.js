@@ -5,6 +5,7 @@ const joi = require('joi');
 const fetch = require('node-fetch');
 const cron = require('node-cron');
 const ping = require('ping');
+const cors = require('@fastify/cors');
 
 // Load environment variables
 dotenv.config();
@@ -12,6 +13,11 @@ dotenv.config();
 const app = Fastify({ logger: true });
 const PORT = process.env.PORT || 3000;
 const TIMEOUT_MS = parseInt(process.env.TIMEOUT_MS, 10) || 5000;
+
+app.register(cors, {
+  origin: '*', // Allow all origins (for development)
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allowed HTTP methods
+});
 
 // Database connection
 const sequelize = new Sequelize({
