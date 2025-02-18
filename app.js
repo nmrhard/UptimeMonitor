@@ -68,7 +68,11 @@ app.post('/add-monitor', async (req, reply) => {
     });
 
     if (existingMonitor) {
-      return reply.status(400).send({ error: 'Monitor already exists.' });
+      await Monitor.update({ ipOrUrl: value.ipOrUrl }, { where: { id: existingMonitor.id } });
+      return reply.send({
+        success: true,
+        message: `Monitor updated for ${value.ipOrUrl}`,
+      });
     }
 
     // Create the new monitor
