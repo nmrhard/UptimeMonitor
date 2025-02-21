@@ -225,6 +225,7 @@ async function handleMonitor(monitor) {
 
 async function checkMonitors() {
   const monitors = await Monitor.findAll();
+  console.log('monitors', monitors);
   await Promise.all(monitors.map(handleMonitor));
 }
 
