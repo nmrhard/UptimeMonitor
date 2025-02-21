@@ -68,7 +68,10 @@ app.post('/add-monitor', async (req, reply) => {
     });
 
     if (existingMonitor) {
-      await Monitor.update({ ipOrUrl: value.ipOrUrl }, { where: { id: existingMonitor.id } });
+      await Monitor.update(
+        { ipOrUrl: value.ipOrUrl },
+        { where: { id: existingMonitor.id } }
+      );
       return reply.send({
         success: true,
         message: `Monitor updated for ${value.ipOrUrl}`,
@@ -128,6 +131,12 @@ app.get('/logs', async (req, reply) => {
   } catch (err) {
     reply.status(500).send({ error: 'Failed to fetch logs.' });
   }
+});
+
+app.delete('/delete-all-monitors', async (req, reply) => {
+  await Monitor.destroy({ where: {} });
+  await MonitorLog.destroy({ where: {} });
+  reply.send({ success: true, message: 'All monitors deleted.' });
 });
 
 function checkIpAddress(ipOrUrl) {
