@@ -148,7 +148,6 @@ function checkIpAddress(ipOrUrl) {
 // Monitoring Logic with Timeout
 async function checkStatus(monitor) {
   const isIpAddress = checkIpAddress(monitor.ipOrUrl);
-
   if (isIpAddress) {
     // Use ping for IP address reachability
     try {
@@ -213,6 +212,8 @@ async function handleMonitor(monitor) {
   try {
     const status = await checkStatus(monitor);
 
+    console.log('status', status);
+    console.log('lastStatus', monitor.lastStatus);
     if (status !== monitor.lastStatus) {
       await updateMonitorStatus(monitor, status);
       await sendWebhook(monitor, status);
