@@ -4,7 +4,6 @@ const dotenv = require('dotenv');
 const joi = require('joi');
 const fetch = require('node-fetch');
 const cron = require('node-cron');
-const ping = require('ping');
 const cors = require('@fastify/cors');
 
 // Load environment variables
@@ -149,14 +148,14 @@ function checkIpAddress(ipOrUrl) {
 async function checkStatus(monitor) {
   const isIpAddress = checkIpAddress(monitor.ipOrUrl);
   if (isIpAddress) {
-    // Use ping for IP address reachability
     try {
-      const res = await ping.promise.probe(monitor.ipOrUrl, {
-        timeout: TIMEOUT_MS / 1000,
-      });
-      return res.alive ? 'online' : 'offline';
+      const res = await fetch(`http://ip-api.com/json/${monitor.ipOrUrl}`);
+      const data = await res.json();
+      console.log('data', data);
+      return data.status === 'success' ? 'online' : 'offline';
     } catch (error) {
-      return 'offline'; // Return offline if ping fails
+      console.log('error', error);
+      return 'offline';
     }
   } else {
     // Use fetch for URL (HTTP/S check)
@@ -212,8 +211,6 @@ async function handleMonitor(monitor) {
   try {
     const status = await checkStatus(monitor);
 
-    console.log('status', status);
-    console.log('lastStatus', monitor.lastStatus);
     if (status !== monitor.lastStatus) {
       await updateMonitorStatus(monitor, status);
       await sendWebhook(monitor, status);
@@ -225,7 +222,6 @@ async function handleMonitor(monitor) {
 
 async function checkMonitors() {
   const monitors = await Monitor.findAll();
-  console.log('monitors', monitors);
   await Promise.all(monitors.map(handleMonitor));
 }
 
