@@ -8,7 +8,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     lastStatus: {
       type: DataTypes.STRING,
-      defaultValue: 'offline',
+      defaultValue: 'online',
     },
     lastChecked: {
       type: DataTypes.DATE,
