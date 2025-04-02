@@ -6,6 +6,9 @@ module.exports = (sequelize) => {
       type: DataTypes.STRING,
       allowNull: false,
     },
+    portNumber: {
+      type: DataTypes.INTEGER,
+    },
     status: {
       type: DataTypes.STRING,
       allowNull: false,

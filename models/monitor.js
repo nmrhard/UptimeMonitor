@@ -6,6 +6,9 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       unique: true, // Ensure that the IP/URL is unique
     },
+    portNumber: {
+      type: DataTypes.INTEGER,
+    },
     lastStatus: {
       type: DataTypes.STRING,
       defaultValue: 'online',
