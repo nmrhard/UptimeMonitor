@@ -5,6 +5,7 @@ const joi = require('joi');
 const fetch = require('node-fetch');
 const cron = require('node-cron');
 const cors = require('@fastify/cors');
+const net = require('net');
 
 // Load environment variables
 dotenv.config();
@@ -50,6 +51,7 @@ const monitorSchema = joi.object({
     joi.string().uri().required() // Validates URLs
   ),
   webhookUrl: joi.string().uri().optional(), // Optional webhook URL
+  portNumber: joi.number().integer().min(1).max(65535).optional(), // Optional port number
 });
 
 // Add Monitor Endpoint
@@ -67,10 +69,17 @@ app.post('/add-monitor', async (req, reply) => {
     });
 
     if (existingMonitor) {
-      await Monitor.update(
-        { ipOrUrl: value.ipOrUrl },
-        { where: { id: existingMonitor.id } }
-      );
+      if (value.portNumber) {
+        await Monitor.update(
+          { ipOrUrl: value.ipOrUrl, portNumber: value.portNumber },
+          { where: { id: existingMonitor.id } }
+        );
+      } else {
+        await Monitor.update(
+          { ipOrUrl: value.ipOrUrl },
+          { where: { id: existingMonitor.id } }
+        );
+      }
       return reply.send({
         success: true,
         message: `Monitor updated for ${value.ipOrUrl}`,
@@ -78,7 +87,15 @@ app.post('/add-monitor', async (req, reply) => {
     }
 
     // Create the new monitor
-    await Monitor.create({ ipOrUrl: value.ipOrUrl });
+    if (value.portNumber) {
+      await Monitor.create({
+        ipOrUrl: value.ipOrUrl,
+        portNumber: value.portNumber,
+      });
+    } else {
+      await Monitor.create({ ipOrUrl: value.ipOrUrl });
+    }
+
     reply.send({
       success: true,
       message: `Monitor added for ${value.ipOrUrl}`,
@@ -144,17 +161,40 @@ function checkIpAddress(ipOrUrl) {
   );
 }
 
+async function checkPort(ip, port, timeout = TIMEOUT_MS) {
+  return new Promise((resolve) => {
+    const socket = new net.Socket();
+    socket.setTimeout(timeout);
+
+    socket.on('connect', () => {
+      socket.destroy();
+      resolve(true);
+    });
+
+    socket.on('timeout', () => {
+      socket.destroy();
+      resolve(false);
+    });
+
+    socket.on('error', () => {
+      resolve(false);
+    });
+
+    socket.connect(port, ip);
+  });
+}
+
 // Monitoring Logic with Timeout
 async function checkStatus(monitor) {
   const isIpAddress = checkIpAddress(monitor.ipOrUrl);
   if (isIpAddress) {
     try {
-      const res = await fetch(`http://ip-api.com/json/${monitor.ipOrUrl}`);
-      const data = await res.json();
-      console.log('data', data);
-      return data.status === 'success' ? 'online' : 'offline';
+      const portStatus = await checkPort(
+        monitor.ipOrUrl,
+        monitor.portNumber || 80
+      );
+      return portStatus ? 'online' : 'offline';
     } catch (error) {
-      console.log('error', error);
       return 'offline';
     }
   } else {
