@@ -149,10 +149,28 @@ app.get('/logs', async (req, reply) => {
   }
 });
 
+// Delete Monitor Endpoint
 app.delete('/delete-all-monitors', async (req, reply) => {
   await Monitor.destroy({ where: {} });
   await MonitorLog.destroy({ where: {} });
   reply.send({ success: true, message: 'All monitors deleted.' });
+});
+
+// Retrieve Monitors Endpoint
+app.get('/monitors', async (req, reply) => {
+  try {
+    const monitors = await Monitor.findAll();
+    const { ipOrUrl, portNumber, webhookUrl } = monitors[0];
+    reply.send({
+      monitors: {
+        ipOrUrl,
+        portNumber,
+        webhookUrl,
+      },
+    });
+  } catch (err) {
+    reply.status(500).send({ error: 'Failed to fetch monitors.' });
+  }
 });
 
 function checkIpAddress(ipOrUrl) {
